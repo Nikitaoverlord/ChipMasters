@@ -1,13 +1,54 @@
 <html>
 <head>
-    <title></title>
-    <link rel="icon" type="image/x-icon" href="favicons/favicon.ico?">
+ <title></title>
+ <link rel="icon" type="image/x-icon" href="favicons/favicon.ico?">
 </head>
 
 <body>
-      <button id="startButton">Start</button>
+   <button id="startButton">Start</button>
 
-      <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
-      <script src="/js/room.js"></script>
+   <h2 id="playerNumTag">My Player Number: </h2>
+   <h2 id="potTag">Pot: $0</h2>
+
+   <br>
+
+   <p id="smallBindTag"></p>
+   <p id="bigBindTag"></p>
+   <p id="dealerTag"></p>
+
+   <br>
+
+   <p>My cards:</p>
+   <p id="myCard1"></p>
+   <p id="myCard2"></p>
+
+   <br>
+   <div id="tableCards">
+       <p>Table Cards: </p>
+   </div>
+   <br>
+
+   <p id="callAmountTag" style="display: none"></p>
+   <button id="checkButton" style="display: none">Check</button>
+   <button id="callButton" style="display: none">Call</button>
+   <button id="foldButton" style="display: none">Fold</button>
+   <button id="raiseButton" style="display: none">Raise</button>
+
+   <form id="raiseForm" style="display: none">
+       <label>Amount: </label>
+       <input id="raiseFormInput" type="text">
+       <button>Raise!</button>
+   </form>
+
+   <br>
+
+   <div id="playerInfo"></div>
+
+   <br>
+
+   <p id="winnerTag" style="display: none"></p>
+
+
+   <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+   <script src="/js/room.js"></script>
 </body>
-</html>

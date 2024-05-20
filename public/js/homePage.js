@@ -2,6 +2,15 @@ const socket = io();
 
 var roomsKnown = []
 
+localStorage.setItem('sessionID', null)
+socket.emit('start-session', null)
+
+socket.on('set-session-acknowledgement', (sessionID) => {
+  localStorage.setItem('sessionID', sessionID)
+})
+
+
+
 // UPDATING VARIABLES FROM BACKEND
 ///////////////////////////////
 
