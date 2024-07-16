@@ -3,7 +3,7 @@ const c = canvas.getContext('2d')
 
 const devicePixelRatio = window.devicePixelRatio || 1
 
-canvas.width = screen.width * 0.8 * devicePixelRatio//1600 * devicePixelRatio
+canvas.width = innerWidth * 0.8 * devicePixelRatio//1600 * devicePixelRatio
 canvas.height = canvas.width * 9/16 * devicePixelRatio//900 * devicePixelRatio
 
 c.scale(devicePixelRatio, devicePixelRatio)
