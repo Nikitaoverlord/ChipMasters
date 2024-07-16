@@ -5,21 +5,34 @@
         <!-- logo -->
         <link rel="icon" type="image/x-icon" href="favicons/favicon.ico?">
         <!--  -->
+        <link rel="stylesheet" href="/css/index.css">
     </head>
   
     <body>
-        <h1>ChipMasters</h1>
 
-        <div id="roomsDiv">
-            <p id="roomsAlert"></p>
-            <h2>Current Rooms:</h2>
-        </div>
+        <header>
+            <nav style="width:95%">
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/roomPage">Rooms</a></li>
+                    <li><a href="#leaderboards">Leaderboards</a></li> 
+                </ul>
+            </nav>
+            <a href="/login"><button id="loginButton">Login</button></a>
 
-        <br>
+        </header>
 
-        <div id="bottom">
-            <p>It's not an addiction, it's a hobby</p>
-        </div>
+        <main>
+            <div class="welcome-section">
+                <h1>Welcome to ChipMasters</h1>
+                <p>It's not an addiction, it's a hobby</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Poker Arena. All rights reserved.</p>
+            <p>Contact us: info@pokerarena.com</p>
+        </footer>
 
         <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
         <script src="/js/homePage.js"></script>

@@ -1,0 +1,49 @@
+<html>
+  
+    <head>
+        <title>ChipMasters | Sneaky Zone</title>
+        <!-- logo -->
+        <link rel="icon" type="image/x-icon" href="favicons/favicon.ico?">
+        <!--  -->
+        <link rel="stylesheet" href="/css/roomPage.css">
+    </head>
+  
+    <body>
+
+        <header>
+            <nav style="width:95%">
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/roomsPage">Rooms</a></li>
+                    <li><a href="#leaderboards">Leaderboards</a></li> 
+                </ul>
+            </nav>
+            <a href="/login"><button id="loginButton">Login</button></a>
+
+        </header>
+        
+        <main>
+            <div class="roomsDiv">
+                <h1>Available Rooms</h1>
+                <p id="roomsAlert" style="color:red"></p>
+                <ul class="room-list">
+
+                </ul>
+                <button id="addRoomButton">+</button>
+                <form id="addRoomForm" action="submit" style="display: none">
+                    <input id="addRoomInput" type="text" placeholder="Room Name">
+                    <button id="addRoomSubmitButton" type="submit">Add</button>
+                </form>
+            </div>
+        </main>
+
+        <footer>
+            <p>It's not an addiction, it's a hobby</p>
+            <p>&copy; 2024 Poker Arena. All rights reserved.</p>
+            <p>Contact us: info@pokerarena.com</p>
+        </footer>
+
+        <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+        <script src="/js/roomPage.js"></script>
+    </body>
+</html>

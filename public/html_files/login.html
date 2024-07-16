@@ -1,0 +1,97 @@
+<html>
+  
+    <head>
+        <title>ChipMasters | Sneaky Zone</title>
+        <!-- logo -->
+        <link rel="icon" type="image/x-icon" href="favicons/favicon.ico?">
+        <!--  -->
+        <link rel="stylesheet" href="/css/login.css">
+    </head>
+  
+    <body>
+
+        <div class="container">
+            <div class="form-container">
+                <div id="successDisplay">
+                    <h2 id="successInfo"></h2>
+                    <!-- <img src="/imgs/checkmark.png" width="55px" height="55px"> -->
+                    <h5 id="successInfoInfo"></h5>
+                    <a href="/"><button>Home</button></a>
+                </div>
+                <form id="login-form" class="form">
+                    <h2>Login</h2>
+                    <h3 id="loginFailed" style="display: none"></h3>
+                    <h5 id="loginFailedInfo" style="display: none"></h5>
+                    <div class="input-group">
+                        <label for="login-email">Email:</label>
+                        <input type="email" id="login-email" name="email" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="login-password">Password:</label>
+                        <input type="password" id="login-password" name="password" required>
+                    </div>
+                    <button type="submit">Login</button>
+                </form>
+
+                <form id="signup-form" class="form">
+                    <h2>Sign Up</h2>
+                    <h3 id="accountExists" style="display: none"></h3>
+                    <h5 id="accountExistsInfo" style="display: none"></h5>
+                    <div class="input-group">
+                        <label for="login-displayname">Display Name:</label>
+                        <input id="login-displayname" name="displayname" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="signup-email">Email:</label>
+                        <input type="email" id="signup-email" name="email" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="signup-password">Password:</label>
+                        <input type="password" id="signup-password" name="password" required>
+                    </div>
+                    <button type="submit">Sign Up</button>
+                </form>
+
+                <form id="optionsForm" style="display: none">
+                    <div class="input-group">
+                        <h2>Pick a color tag:</h2>
+                        <div class="options">
+                            <!-- <label> -->
+                                <input  class="tag" type="image" src="/imgs/tags/tag-aqua.png" name="option" value="aqua" onclick="tagChoice='aqua'">
+                            <!-- </label> -->
+                            <!-- <label> -->
+                                <input class="tag" type="image" src="/imgs/tags/tag-blue.png" name="option" value="blue" onclick="tagChoice='blue'">
+                            <!-- </label> -->
+                            <!-- <label> -->
+                                <input class="tag" type="image" src="/imgs/tags/tag-green.png" name="option" value="green" onclick="tagChoice='green'">
+                            <!-- </label>
+                            <label> -->
+                                <input class="tag" type="image" src="/imgs/tags/tag-orange.png" name="option" value="orange" onclick="tagChoice='orange'">
+                            <!-- </label>
+                            <label> -->
+                                <input class="tag" type="image" src="/imgs/tags/tag-purple.png" name="option" value="purple" onclick="tagChoice='purple'">
+                            <!-- </label>
+                            <label> -->
+                                <input class="tag" type="image" src="/imgs/tags/tag-red.png" name="option" value="red" onclick="tagChoice='red'">
+                            <!-- </label>
+                            <label> -->
+                                <input class="tag" type="image" src="/imgs/tags/tag-yellow.png" name="option" value="yellow" onclick="tagChoice='yellow'">
+
+                                <input class="tag" type="image" src="/imgs/tags/tag-black.png" name="option" value="black" onclick="tagChoice='black'">
+                            <!-- </label> -->
+                        </div>
+                    </div>
+                    <!-- <div class="input-group">
+                        <button type="submit">Pick Color Tag</button>
+                    </div> -->
+                </form>
+
+            </div>
+        </div>
+
+        
+
+        <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+        <script src="/js/login.js"></script>
+    </body>
+</html>
