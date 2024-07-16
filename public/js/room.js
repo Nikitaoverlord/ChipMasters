@@ -395,7 +395,7 @@ function reset(){
   firstTableMouseClick = null
   currentBetterNum = smallBindNumber
   
-  fontSize = 30
+  fontSize = canvas.height / 30//30
 }
 
 
