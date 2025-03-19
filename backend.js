@@ -174,6 +174,18 @@ class Table {
     }
 }
 
+function emitUpdateLobby(room){
+    lobbyInfo = {"users": {}}
+    for (userID in room.currentUsers){
+        lobbyInfo["users"][userID] = {
+            "tagColor": accountInfo[users[userID].email].tagColor,
+            "name": accountInfo[users[userID].email].displayname,
+        }
+    }
+    lobbyInfo["roomName"] = room.name
+    io.to(room.name).emit('update lobby', (lobbyInfo))
+}
+
 function emitUpdatePlayer(room){
     for (playerID in room.table.players){
         let otherPlayerInfo = {}
@@ -282,6 +294,7 @@ function beginRound(room){
 
     // socket.send ask-bets for
     room.currentBetter = room.table.smallBindNum
+    io.to(room.name).emit('current better', room.currentBetter)
     
     io.to(getSessionIDFromPlayerNum(room.currentBetter, room)).emit('ask bets', room.table.currentCall)
 
@@ -380,7 +393,7 @@ io.on('connection', (socket) => {
             socketIDToSessionID[socket.id] = newSessionID
 
             users[newSessionID] = {loggedIn: false, email: null, room: null}
-
+    
             io.to(socket.id).emit('set-session-acknowledgement', newSessionID)
 
             sessionIDToMostRecentSocketID[newSessionID] = socket.id
@@ -440,8 +453,9 @@ io.on('connection', (socket) => {
         // delete users[socket.id]
         rooms.forEach((room) => {
             sessionID = socketIDToSessionID[socket.id]
-            if (Object.keys(room.currentUsers).includes(sessionID))
+            if (Object.keys(room.currentUsers).includes(sessionID)){
                 setToDeleteSessions.push([getRoomIndexFromRoomName(room.name), sessionID])
+            }
         })
         io.emit('updateUsers', users)
     })
@@ -467,6 +481,13 @@ io.on('connection', (socket) => {
         socket.join(roomName)
 
         rooms[getRoomIndexFromRoomName(roomName)].currentUsers[socketIDToSessionID[socket.id]] = users[socketIDToSessionID[socket.id]]
+
+        roomPlayers = []
+        for (userID in rooms[getRoomIndexFromRoomName(roomName)].currentUsers){
+            roomPlayers.push(accountInfo[users[userID].email].displayname)
+        }
+
+        emitUpdateLobby(rooms[getRoomIndexFromRoomName(roomName)])
     })
 
     socket.on('addRoom', (newRoomName) => {
@@ -498,9 +519,11 @@ io.on('connection', (socket) => {
         roomName = users[socketIDToSessionID[socket.id]].room
         room = rooms[getRoomIndexFromRoomName(roomName)]
         if (Object.keys(room.currentUsers).length >= 2){
-            rooms[getRoomIndexFromRoomName(roomName)].canJoin = false;
-            io.to(roomName).emit('remove start button')
-            startNewGame(room, socket.id)
+            if (rooms[getRoomIndexFromRoomName(roomName)].canJoin){
+                rooms[getRoomIndexFromRoomName(roomName)].canJoin = false;
+                io.to(roomName).emit('remove start button')
+                startNewGame(room, socket.id)
+            }
         }
         else
             io.to(socket.id).emit('not enough players')
@@ -508,6 +531,7 @@ io.on('connection', (socket) => {
 
     socket.on('deck clicked', () => {
         sessionID = socketIDToSessionID[socket.id]
+        if (users[sessionID] == null) return;
         let roomName = users[sessionID].room
         let room = rooms[getRoomIndexFromRoomName(roomName)]
 
@@ -632,6 +656,7 @@ setInterval(() => {
 
     rooms.forEach((room) => {
         if (room.canJoin){
+            emitUpdateLobby(room)
             return // to ensure room game has started
         } 
 

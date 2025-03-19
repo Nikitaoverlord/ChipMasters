@@ -46,10 +46,14 @@ var playersLeft = []
 
 var potSize = 0
 
+var gameStarted = false
+
 function getPlayerIDFromPlayerNum(playerNum){
   for (ID in otherPlayers)
       if (otherPlayers[ID].playerNum == playerNum) return ID
 }
+
+var lobbyInfo = {}
 
 var cashToNumber = {0:'0', 20:'1', 50:'2', 100:'3', 200:'4', 500:'5'}
 
@@ -70,8 +74,13 @@ socket.on('updateUsers', (backendUsers) => {
   }
 })
 
+socket.on('update lobby', (lobbyInfoBackend) => {
+  lobbyInfo = lobbyInfoBackend
+})
+
 socket.on('remove start button', () => {
-  document.querySelector('#startButton').style.display = 'none'
+  startButton.new_src('')
+  gameStarted = true
 })
 
 socket.on('not enough players', () => {
@@ -115,7 +124,31 @@ socket.on('dealer', (number) => {
 
 socket.on('deal 2 cards', () => {
   // animation of cards
-  dealOutCards()
+  for (playerNum in otherPlayers){
+    dealOutCard(
+      sprite = new CardSprite(deck.x, deck.y, cardW, cardH, '/imgs/cards/cardback.png'),
+      endX = cardAroundSeatsPos[playerNum-1][0],
+      endY = cardAroundSeatsPos[playerNum-1][1],
+    )
+    dealOutCard(
+      sprite = new CardSprite(deck.x, deck.y, cardW, cardH, '/imgs/cards/cardback.png'),
+      endX = cardAroundSeatsPos[playerNum-1][0] + cardW + cardSpace,
+      endY = cardAroundSeatsPos[playerNum-1][1],
+    )
+  }
+  myCard1.x = deck.x, myCard1.y = deck.y
+  myCard2.x = deck.x, myCard2.y = deck.y
+
+  dealOutCard(
+    sprite = myCard1,
+    endX = cardAroundSeatsPos[myPlayer.playerNum-1][0],
+    endY = cardAroundSeatsPos[myPlayer.playerNum-1][1],
+  )
+  dealOutCard(
+    sprite = myCard2,
+    endX = cardAroundSeatsPos[myPlayer.playerNum-1][0] + cardW + cardSpace,
+    endY = cardAroundSeatsPos[myPlayer.playerNum-1][1],
+  )
 
   myCard1.new_src('/imgs/cards' + `/${myPlayer.cards[0].suit}/` + myPlayer.cards[0].value + " of " + myPlayer.cards[0].suit + '.png')
   myCard2.new_src('/imgs/cards' + `/${myPlayer.cards[1].suit}/` + myPlayer.cards[1].value + " of " + myPlayer.cards[1].suit + '.png')
@@ -189,6 +222,13 @@ socket.on('reveal table cards', (allTableCards) => {
 
           tableCardSprites[knownCards.length-1].new_src('/imgs/cards' + `/${card.suit}/` + cardString + '.png')
           tableCardSprites[knownCards.length-1].frontside = '/imgs/cards' + `/${card.suit}/` + cardString + '.png'
+          
+          let endX = tableCardSprites[knownCards.length-1].x
+          let endY = tableCardSprites[knownCards.length-1].y
+          tableCardSprites[knownCards.length-1].x = deck.x
+          tableCardSprites[knownCards.length-1].y = deck.y
+          
+          dealOutCard(tableCardSprites[knownCards.length-1], endX, endY)
       }
   })
 })
@@ -224,6 +264,7 @@ socket.on('winner', (winnerNums) => {
 
 socket.on('reset', () => { // Make a ready button!
   beginWinWait = true
+  gameStarted = false
 })
 
 socket.on('user left', (playerNum) => {
@@ -232,9 +273,9 @@ socket.on('user left', (playerNum) => {
 
 
 
-document.querySelector('#startButton').addEventListener('click', function(){
-  socket.emit('startGame')
-})
+// document.querySelector('#startButton').addEventListener('click', function(){
+//   socket.emit('startGame')
+// })
 
 
 class ImageSprite {
@@ -288,6 +329,88 @@ class ImageSprite {
   }
 }
 
+class Button extends ImageSprite {
+  constructor(x, y, width, height, src){
+    super(x,y,width,height,src)
+    this.touchingMouse = false
+    this.clicked = false
+
+    this.owidth = width // original width
+    this.oheight = height // original height
+  }
+
+  update(px, py, click) {
+    if (px < this.x + this.width && px > this.x && py < this.y + this.height && py > this.y){
+        this.touchingMouse = true
+
+        this.setSize(this.owidth*1.1, this.oheight*1.1)
+
+        if (click) this.clicked = true
+        else this.clicked = false
+    }
+    else {
+      this.touchingMouse = false
+
+      this.setSize(this.owidth, this.oheight)
+
+      this.clicked = false
+    }
+  }
+}
+
+class Switch extends Button {
+  constructor(x, y, width, height, off_src, on_src){
+    super(x,y,width,height,off_src)
+    this.off_src = off_src
+    this.on_src = on_src
+    this.on = true
+  }
+
+  update(px, py, click){
+    super.update(px, py, click)
+    if (this.clicked) this.on = !this.on
+
+    if (this.on) this.new_src(this.on_src)
+    else this.new_src(this.off_src)
+  }
+}
+
+class SettingsPanel extends ImageSprite {
+  constructor(x, y, width, height, src){
+    super(x,y,width,height,src)
+
+    this.open = false
+    let settingsButtonProportions = [width/4, width/4]
+    this.settingsButton = new Button(x+width-settingsButtonProportions[0],y, settingsButtonProportions[0], settingsButtonProportions[1], "/imgs/gadgets/settingsButton.png")
+
+    let colPos = [x+width/3, x+width*2/3] // x possition of Column 1 of panel and Column 2
+    let rowPos = [y+height*1/4, y+height*2/4, y+height*3/4] // y position of each row (3 rows)
+
+    let dealSwitchProportions = [width/5, width/10]
+    this.autoDealSwitch = new Switch(colPos[0]-dealSwitchProportions[0]/2, rowPos[0]-dealSwitchProportions[1]/2, dealSwitchProportions[0], dealSwitchProportions[1], "/imgs/gadgets/offSwitch.png", "/imgs/gadgets/onSwitch.png")
+  }
+
+  update(px, py, click){
+    this.settingsButton.update(px, py, click)
+    if (this.settingsButton.clicked) this.open = !this.open
+
+    if (this.open){
+      // rest of buttons can only run updates if panel is open
+      this.autoDealSwitch.update(px, py, click)
+      //
+    }
+  }
+
+  draw() {
+    if (this.open){ // If panel is open, draw all the buttons
+      c.drawImage(this.image, this.x, this.y, this.width, this.height) // draw panel
+
+      this.autoDealSwitch.draw()
+    }
+    this.settingsButton.draw() // always draw settings button
+  }
+}
+
 class Table extends ImageSprite{
   constructor(width, height, src, chairSize){
     super((canvas.width - width) / 2, (canvas.height - height) / 2, width, height, src)
@@ -327,66 +450,98 @@ function cashToNumberConvertor(cash){
   return yourNumber
 }
 
-function dealOutCards(){
-  for (playerNum in otherPlayers){
-    otherPlayerCards.push(new CardSprite(cardAroundSeatsPos[playerNum-1][0], cardAroundSeatsPos[playerNum-1][1], cardW, cardH, '/imgs/cards/cardback.png'))
-    otherPlayerCards.push(new CardSprite(cardAroundSeatsPos[playerNum-1][0] + cardW + cardSpace, cardAroundSeatsPos[playerNum-1][1], cardW, cardH, '/imgs/cards/cardback.png'))
-  }
-  myCard1.x = cardAroundSeatsPos[myPlayer.playerNum-1][0], myCard1.y = cardAroundSeatsPos[myPlayer.playerNum-1][1]
-  myCard2.x = cardAroundSeatsPos[myPlayer.playerNum-1][0] + cardW + cardSpace, myCard2.y = cardAroundSeatsPos[myPlayer.playerNum-1][1]
+function dealOutCard(sprite, endX, endY){
+  let cardSpeed = (canvas.width/20)/FPS 
+  let angle = Math.atan2(endY-sprite.y, endX-sprite.x)
+    cardAnimationQueue.push({
+      sprite: sprite,
+      endX: endX,
+      endY: endY,
+      speed: cardSpeed,
+      angle: angle
+  })
 }
 
 function reset(){
   console.log('reset!')
-  // remove table cards
-
-  // reseting game values
-
-  potSize = 0
-  knownCards = []
-
-  playersLeft = []
 
   FPS = 15
 
+  chairSize = canvas.width / 12; // 800/6
   table = new Table(canvas.width* 2/3, (canvas.width * 2/3)/2, "/imgs/pokertable.png", chairSize)
-  
+
+  chairs = []
+  for (let i=0; i<6; i++){
+      let position = table.chairSpots[i];
+      chairs.push(new ImageSprite(position[0], position[1], chairSize, chairSize, '/imgs/chair.png'))
+      if (i==0 || i==1) chairs[i].rotate = 180
+      else if (i==2) chairs[i].rotate = 270
+      else if (i==5) chairs[i].rotate = 90
+  }
+
+  bindSize = canvas.width/25
   smallBind = new ImageSprite(-bindSize,-bindSize, bindSize, bindSize, '/imgs/small_bind.png')
   bigBind = new ImageSprite(-bindSize,-bindSize, bindSize, bindSize, '/imgs/big_bind.png')
   dealer = new ImageSprite(-bindSize,-bindSize, bindSize, bindSize, '/imgs/dealer.png')
-  
+
+  tableCardW = table.width * (0.39/6.36), tableCardH = tableCardW * 460 / 300
+  tableCardXStart = table.x + table.width*(3.985/6.36), tableCardYStart = table.y + table.height * (1/3.38)
+  tableCardSpace = table.width * (0.11/6.36)
+  tableCardPos = [[tableCardXStart, tableCardYStart], [tableCardXStart - tableCardW - tableCardSpace, tableCardYStart], [tableCardXStart - tableCardW*2 - tableCardSpace*2, tableCardYStart], [tableCardXStart - tableCardW*3 - tableCardSpace*3, tableCardYStart], [tableCardXStart - tableCardW*4 - tableCardSpace*4, tableCardYStart]]
   tableCardSprites = [new CardSprite(tableCardPos[0][0],tableCardPos[0][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[1][0],tableCardPos[1][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[2][0],tableCardPos[2][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[3][0],tableCardPos[3][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[4][0],tableCardPos[4][1],tableCardW,tableCardH,'')]
-  
-  myCard1 = new CardSprite(0,0,cardW,cardH,'');
-  const myCard2 = new CardSprite(0,0,cardW,cardH,'');
-  
+  cardAnimationQueue = [] // {Sprite, endX, endY, speed}
+  queuePause = false
+
+  deck = new ImageSprite(0,0,tableCardW*1.078, tableCardH*1.145,'/imgs/cards/deck.png'); // 1.078x width, 1.145x height
+
+  cardW = tableCardW/1.25, cardH = tableCardH/1.25//table.width/12, cardH = cardW * 460 / 300
+  myCard1 = new CardSprite(deck.x,deck.y,cardW,cardH,'');
+  myCard2 = new CardSprite(deck.x,deck.y,cardW,cardH,'');
+  cardSpace = cardW/10
+
+  cardAroundSeatsPos = [[table.chairSpots[0][0] + chairSize/2 - cardW - cardSpace, table.chairSpots[0][1] - cardH],
+                              [table.chairSpots[1][0] + chairSize/2 - cardW - cardSpace, table.chairSpots[1][1] - cardH],
+                              [table.chairSpots[2][0] + chairSize, table.chairSpots[2][1] + chairSize/2 - cardH],
+                              [table.chairSpots[3][0] + chairSize/2 - cardW - cardSpace, table.chairSpots[3][1] + chairSize],
+                              [table.chairSpots[4][0] + chairSize/2 - cardW - cardSpace, table.chairSpots[4][1] + chairSize],
+                              [table.chairSpots[5][0]-cardW*2-cardSpace, table.chairSpots[5][1] + chairSize/2 - cardH]
+                            ]
+
+  playerTagWidth = (464/2)/1600 * canvas.width
+  playerTagHeight = (178/2)/1600 * canvas.width
   playerTags = []
-  
+
   tagAura = new ImageSprite(-(playerTagWidth + playerTagWidth/10),-(playerTagHeight+ playerTagWidth/10),playerTagWidth + playerTagWidth/10, playerTagHeight+ playerTagWidth/10,'/imgs/tags/tag-aura.png');
   auracount = 0
-  
+  auraCountMax = FPS * 4 
+
+  cursorWidth = (389/4)/1600 * canvas.width, cursorHeight = (508/4)/1600 * canvas.width
   cursor = new ImageSprite(0,0,cursorWidth,cursorHeight,'');
-  
+
   knockButton = new CardSprite(0,0,0,0,'');
-  
+
   callButton = new ImageSprite(0,0,table.width/8 * 1.26,table.width/8,''); //1.26
-  
-  deck = new ImageSprite(0,0,tableCardW*1.078, tableCardH*1.145,'/imgs/cards/deck.png'); // 1.078x width, 1.145x height
+
   otherPlayerCards = []
-  
+
+  messageW = playerTagWidth/1.5, messageH = messageW / 3.078 //3.078
   messages = []
-  
+
   pot = new ImageSprite(0,0,table.width/6 * 1.26,table.width/6,'')
-  
+
   raiseButton = new ImageSprite(-(callButton.width/5 * 1.859),-(callButton.width/5 * 1.859,callButton.width/5),callButton.width/5 * 1.859,callButton.width/5,'/imgs/raiseButton.png')
-  
+
+  raiseChipsW = raiseButton.width, raiseChipsH = raiseChipsW * 0.418
   raiseChips = []
-  
+
+  panelProportions = [canvas.width/8, canvas.width/8 * 3/2]
+  settingsPanel = new SettingsPanel(canvas.width-panelProportions[0], 0, panelProportions[0], panelProportions[1], '/imgs/gadgets/settingsPanel.png')
+
   winnerMessage = ""
   beginWinWait = false
-  winWaitMax = FPS * 60
+  winWaitMax = FPS * 30
   winWait = 0
-  
+
   haveMadeMove = true
   canCheck = null
   isDraggingCards = false
@@ -394,93 +549,135 @@ function reset(){
   displayRaiseChips = false
   firstTableMouseClick = null
   currentBetterNum = smallBindNumber
-  
-  fontSize = canvas.height / 30//30
+
+  fontSize = canvas.height / 30
+
+  potSize = 0
+  knownCards = []
+
+  playersLeft = []
+
+  FPS = 15
+// ////////
+}
+
+function moveQueue(queue){
+  doneWithQueue = []
+  for (let i=0; i<queue.length; i++){
+    let instance = queue[i]
+    if (instance.endX > instance.sprite.x){
+      instance.sprite.x += instance.speed * Math.cos(instance.angle)
+      if (instance.endX <= instance.sprite.x){
+        instance.sprite.x = instance.endX, instance.sprite.y = instance.endY
+        doneWithQueue.push(instance)
+      }
+    }
+    else{
+      instance.sprite.x += instance.speed * Math.cos(instance.angle)
+      if (instance.endX >= instance.sprite.x){
+        instance.sprite.x = instance.endX, instance.sprite.y = instance.endY
+        doneWithQueue.push(instance)
+      }
+    }
+    if (!doneWithQueue.includes(instance)){
+      if (instance.endY > instance.sprite.y){
+        instance.sprite.y += instance.speed * Math.sin(instance.angle)
+        if (instance.endY <= instance.sprite.y){
+          instance.sprite.y = instance.endY, instance.sprite.x = instance.endX
+          doneWithQueue.push(instance)
+        }
+      }
+      else{
+        instance.sprite.y += instance.speed * Math.sin(instance.angle)
+        if (instance.endY >= instance.sprite.y){
+          instance.sprite.y = instance.endY, instance.sprite.x = instance.endX
+          doneWithQueue.push(instance)
+        }
+      }
+    }
+  }
+
+  return doneWithQueue
 }
 
 
 //////////////////
 // SETUP VARIABLES
-var FPS = 15
+var FPS;
 
-const chairSize = canvas.width / 12; // 800/6
-var table = new Table(canvas.width* 2/3, (canvas.width * 2/3)/2, "/imgs/pokertable.png", chairSize)
+var chairSize;
+var table;
 
-const chairs = []
-for (let i=0; i<6; i++){
-    let position = table.chairSpots[i];
-    chairs.push(new ImageSprite(position[0], position[1], chairSize, chairSize, '/imgs/chair.png'))
-    if (i==0 || i==1) chairs[i].rotate = 180
-    else if (i==2) chairs[i].rotate = 270
-    else if (i==5) chairs[i].rotate = 90
-}
+var chairs;
 
-var bindSize = canvas.width/25
-var smallBind = new ImageSprite(-bindSize,-bindSize, bindSize, bindSize, '/imgs/small_bind.png')
-var bigBind = new ImageSprite(-bindSize,-bindSize, bindSize, bindSize, '/imgs/big_bind.png')
-var dealer = new ImageSprite(-bindSize,-bindSize, bindSize, bindSize, '/imgs/dealer.png')
+var bindSize;
+var smallBind;
+var bigBind;
+var dealer;
 
-const tableCardW = table.width * (0.39/6.36), tableCardH = tableCardW * 460 / 300
-const tableCardXStart = table.x + table.width*(3.985/6.36), tableCardYStart = table.y + table.height * (1/3.38)
-const tableCardSpace = table.width * (0.11/6.36)
-const tableCardPos = [[tableCardXStart, tableCardYStart], [tableCardXStart - tableCardW - tableCardSpace, tableCardYStart], [tableCardXStart - tableCardW*2 - tableCardSpace*2, tableCardYStart], [tableCardXStart - tableCardW*3 - tableCardSpace*3, tableCardYStart], [tableCardXStart - tableCardW*4 - tableCardSpace*4, tableCardYStart]]
-var tableCardSprites = [new CardSprite(tableCardPos[0][0],tableCardPos[0][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[1][0],tableCardPos[1][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[2][0],tableCardPos[2][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[3][0],tableCardPos[3][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[4][0],tableCardPos[4][1],tableCardW,tableCardH,'')]
+var tableCardW;
+var tableCardXStart;
+var tableCardSpace;
+var tableCardPos;
+var tableCardSprites;
+var cardAnimationQueue;
+var queuePause;
 
-const cardW = tableCardW/1.25, cardH = tableCardH/1.25//table.width/12, cardH = cardW * 460 / 300
-var myCard1 = new CardSprite(0,0,cardW,cardH,'');
-var myCard2 = new CardSprite(0,0,cardW,cardH,'');
-const cardSpace = cardW/10
+var deck;
 
-const cardAroundSeatsPos = [[table.chairSpots[0][0] + chairSize/2 - cardW - cardSpace, table.chairSpots[0][1] - cardH],
-                            [table.chairSpots[1][0] + chairSize/2 - cardW - cardSpace, table.chairSpots[1][1] - cardH],
-                            [table.chairSpots[2][0] + chairSize, table.chairSpots[2][1] + chairSize/2 - cardH],
-                            [table.chairSpots[3][0] + chairSize/2 - cardW - cardSpace, table.chairSpots[3][1] + chairSize],
-                            [table.chairSpots[4][0] + chairSize/2 - cardW - cardSpace, table.chairSpots[4][1] + chairSize],
-                            [table.chairSpots[5][0]-cardW*2-cardSpace, table.chairSpots[5][1] + chairSize/2 - cardH]
-                          ]
+var cardW;
+var myCard1;
+var myCard2;
+var cardSpace;
 
-const playerTagWidth = (464/2)/1600 * canvas.width
-const playerTagHeight = (178/2)/1600 * canvas.width
-var playerTags = []
+var cardAroundSeatsPos;
 
-var tagAura = new ImageSprite(-(playerTagWidth + playerTagWidth/10),-(playerTagHeight+ playerTagWidth/10),playerTagWidth + playerTagWidth/10, playerTagHeight+ playerTagWidth/10,'/imgs/tags/tag-aura.png');
-var auracount = 0
-const auraCountMax = FPS * 8 
+var playerTagWidth;
+var playerTagHeight;
+var playerTags;
 
-const cursorWidth = (389/4)/1600 * canvas.width, cursorHeight = (508/4)/1600 * canvas.width
-var cursor = new ImageSprite(0,0,cursorWidth,cursorHeight,'');
+var tagAura;
+var auracount;
+var auraCountMax;
 
-var knockButton = new CardSprite(0,0,0,0,'');
+var cursorWidth;
+var cursor;
 
-var callButton = new ImageSprite(0,0,table.width/8 * 1.26,table.width/8,''); //1.26
+var knockButton;
 
-var deck = new ImageSprite(0,0,tableCardW*1.078, tableCardH*1.145,'/imgs/cards/deck.png'); // 1.078x width, 1.145x height
-var otherPlayerCards = []
+var callButton;
 
-const messageW = playerTagWidth/1.5, messageH = messageW / 3.078 //3.078
-var messages = []
+var otherPlayerCards;
 
-var pot = new ImageSprite(0,0,table.width/6 * 1.26,table.width/6,'')
+var messageW;
+var messages;
 
-var raiseButton = new ImageSprite(-(callButton.width/5 * 1.859),-(callButton.width/5 * 1.859,callButton.width/5),callButton.width/5 * 1.859,callButton.width/5,'/imgs/raiseButton.png')
+var pot;
 
-const raiseChipsW = raiseButton.width, raiseChipsH = raiseChipsW * 0.418
-var raiseChips = []
+var raiseButton;
 
-var winnerMessage = ""
-var beginWinWait = false
-var winWaitMax = FPS * 60
-var winWait = 0
+var raiseChipsW;
+var raiseChips;
 
-var haveMadeMove = true
-var canCheck = null
-var isDraggingCards = false
-var haveFolded = false
-var displayRaiseChips = false
-var firstTableMouseClick = null
-var currentBetterNum = null
+var panelProportions;
+var settingsPanel;
 
-var fontSize = 30
+var winnerMessage;
+var beginWinWait;
+var winWaitMax;
+var winWait;
+
+var haveMadeMove;
+var canCheck;
+var isDraggingCards;
+var haveFolded;
+var displayRaiseChips;
+var firstTableMouseClick;
+var currentBetterNum;
+
+var fontSize;
+
+reset()
 //////////////////
 //////////////////
 
@@ -498,8 +695,8 @@ function update(){
   deck.x = tableCardXStart + cardW + tableCardSpace*2, deck.y = table.y + table.height/2 - cardH/2
 
   if (Object.keys(myPlayer).length != 0){
-    myCard1.x = cardAroundSeatsPos[myPlayer.playerNum-1][0], myCard1.y = cardAroundSeatsPos[myPlayer.playerNum-1][1]
-    myCard2.x = cardAroundSeatsPos[myPlayer.playerNum-1][0] + cardW + cardSpace, myCard2.y = cardAroundSeatsPos[myPlayer.playerNum-1][1]
+    //myCard1.x = cardAroundSeatsPos[myPlayer.playerNum-1][0], myCard1.y = cardAroundSeatsPos[myPlayer.playerNum-1][1]
+    //myCard2.x = cardAroundSeatsPos[myPlayer.playerNum-1][0] + cardW + cardSpace, myCard2.y = cardAroundSeatsPos[myPlayer.playerNum-1][1]
 
     callButton.setSize(table.width/6 * 1.26,table.width/6)
     callButton.x = canvas.width - callButton.width*1.2, callButton.y = canvas.height - callButton.height - canvas.height/15
@@ -517,11 +714,38 @@ function update(){
     messages.push(new ImageSprite(0,0,messageW,messageH,''))
   }
 
+  // object updates
+  settingsPanel.update(mousePos[0], mousePos[1], clicked)
+  //
+
+  if (!haveMadeMove && myPlayer.cash == 0){
+    socket.emit('call')
+    haveMadeMove = true
+  }
+
+  if (settingsPanel.autoDealSwitch.on){
+    socket.emit('deck clicked')
+  }
+
+  let cardsDoneWithQueue;
+  if (!queuePause) cardsDoneWithQueue = moveQueue(cardAnimationQueue)
+  for (let i=0; i<cardsDoneWithQueue.length; i++){
+
+    if (cardsDoneWithQueue[i].sprite == myCard1) myCard1 = cardsDoneWithQueue[i].sprite
+    else if (cardsDoneWithQueue[i].sprite == myCard2) myCard2 = cardsDoneWithQueue[i].sprite
+    else {
+      otherPlayerCards.push(cardsDoneWithQueue[i].sprite)
+    }
+    cardAnimationQueue.splice(cardAnimationQueue.indexOf(cardsDoneWithQueue[i]), 1)
+  }
+
   // cursor switches
   document.body.style.cursor = 'auto';
   cursor.x = mousePos[0] - cursor.width/2, cursor.y = mousePos[1] - cursor.height/4
-
-  if (myCard1.isTouching(...mousePos) && myCard1.drawn){
+  if (settingsPanel.isTouching(...mousePos)){
+    //filler
+  }
+  else if (myCard1.isTouching(...mousePos) && myCard1.drawn){
     document.body.style.cursor = 'none';
     cursor.new_src('/imgs/cursors/pointer.png')
     if (clicked) {
@@ -556,12 +780,12 @@ function update(){
     document.body.style.cursor = 'none'; // none vs auto
     cursor.new_src('/imgs/cursors/pointer.png')
 
-    if (clicked && !haveMadeMove){
+    if (clicked && !haveMadeMove && !canCheck){
       socket.emit('call')
       haveMadeMove = true
     }
   }
-  else if (deck.isTouching(...mousePos) && deck.drawn && myPlayer.playerNum == dealerNumber){    
+  else if (deck.isTouching(...mousePos) && deck.drawn && myPlayer.playerNum == dealerNumber){ // option always available even if autodeal is on    
     deck.setSize(deck.width * 1.1, deck.height*1.1)
     deck.x = deck.x - (deck.width - deck.width/1.1)/2, deck.y = deck.y - (deck.height - deck.height/1.1)/2 // no need to reset after mouse moves cause its done in the beginning of this functon
     
@@ -644,7 +868,7 @@ function update(){
 
         let amountRaised = Math.round(diff / raiseChipsH) * (raiseChipsH / table.height) * myPlayer.cash
         
-        if (!haveMadeMove)
+        if (!haveMadeMove && amountRaised != 0)
           socket.emit('raise', (amountRaised))
 
         raiseChips = []
@@ -697,6 +921,7 @@ function update(){
   else if (Object.keys(myPlayer).length == 0) tagAura.needToDraw=false
 
   if (beginWinWait){
+    queuePause = true
     winWait ++
     if (winWait >= winWaitMax){
       beginWinWait = false
@@ -706,11 +931,75 @@ function update(){
   
 }
 
+var startButtonProp = [canvas.width/20, canvas.width/30]
+var startButton = new Button(canvas.width/2 - startButtonProp[0]/2, canvas.height - startButtonProp[1]*1.25, startButtonProp[0], startButtonProp[1], '/imgs/gadgets/startButton.png')
+
+function updateLobby(){
+  let combinedPlayers = {...otherPlayers}
+  combinedPlayers[myPlayer.playerNum] = myPlayer
+
+  startButton.update(mousePos[0], mousePos[1], clicked)
+
+  if (startButton.clicked){
+    socket.emit('startGame')
+    startButton.clicked = false
+  }
+
+  clicked = false
+  dblclicked = false
+}
+
+let animationLobbyId;
+function animateLobby(){
+  if (gameStarted){
+    animate()
+  } else animationLobbyId = requestAnimationFrame(animateLobby)
+
+  updateLobby()
+
+  c.clearRect(0, 0, canvas.width, canvas.height)
+
+   // Label: name of lobby
+  headerFontSize = fontSize*2.5
+  c.font = headerFontSize + 'px nunito'
+  c.fillStyle = 'orange'
+  c.textAlign = 'center'
+  c.fillText(lobbyInfo["roomName"], canvas.width/2, headerFontSize)
+  // Label: Waiting to start...
+  subHeaderFontSize = headerFontSize/2
+  c.font = subHeaderFontSize + 'px nunito'
+  c.fillStyle = 'orange'
+  c.textAlign = 'center'
+  c.fillText('Waiting to start...', canvas.width/2, startButton.y - startButton.height) 
+  // Label: players
+  let i=0;
+  c.font = subHeaderFontSize + 'px nunito'
+  c.textAlign = 'left'
+  for (let userID in lobbyInfo["users"]){
+    c.fillStyle = lobbyInfo["users"][userID].tagColor
+    c.fillText((i+1) + ". " + lobbyInfo["users"][userID].name, 40, 2*headerFontSize + subHeaderFontSize*i)
+    i++
+  }
+ 
+  // Button
+  startButton.draw()
+  
+
+  // for (let i=0; i<frontEndUsers.length; i++){
+
+  //   c.font = fontSize + "px nunito"; // nunito
+  //   c.fillStyle = 'black'
+    
+  //   c.fillText(lobbyPlayerNames[i], 20, 20 + 20*i);
+  // }
+  
+
+
+}
 
 let animationId;
 function animate() {
   animationId = requestAnimationFrame(animate)
-
   update() // HERE IS WHERE THE LOGIC HAPPENS
 
   c.clearRect(0, 0, canvas.width, canvas.height)
@@ -896,6 +1185,10 @@ function animate() {
   bigBind.draw()
   dealer.draw()
 
+  for (let i=0; i<cardAnimationQueue.length; i++){
+    cardAnimationQueue[i].sprite.draw()
+  }
+
   if (Object.keys(myPlayer).length != 0 && myPlayer.cards.length != 0){
     if (!haveFolded){
       myCard1.draw()
@@ -927,6 +1220,8 @@ function animate() {
     c.font = fontSizeWinner + 'px roboto'
     c.fillText(winnerMessage, canvas.width/2-(fontSizeWinner * winnerMessage.length)/4, canvas.height/2)
   }
+
+  settingsPanel.draw()
 
 
   if (cursor.src != '') cursor.draw()
@@ -961,7 +1256,7 @@ canvas.addEventListener("dblclick", function (e) {
 
 
 
-animate()
+animateLobby()
 
 
 
