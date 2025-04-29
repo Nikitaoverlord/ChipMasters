@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ChromeOS Update</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #202124;
+      font-family: 'Roboto', 'Noto Sans', sans-serif;
+      color: #e8eaed;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      overflow: hidden;
+    }
+    .header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 40px 0 20px 0;
+      animation: fadeIn 1s ease;
+      margin-bottom: 5%;
+    }
+    .logoRow {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .logo {
+      width: 48px;
+      margin-right: 10px;
+    }
+    .title {
+      font-size: 4em;
+      font-weight: 500;
+      color: #e8eaed;
+    }
+    .subtitle {
+      font-size: 1.8em;
+      color: #9aa0a6;
+      margin-top: 5px;
+    }
+    hr {
+      width: 90%;
+      border: none;
+      border-top: 1px solid #5f6368;
+      margin: 20px 0;
+    }
+    .content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      flex-grow: 1;
+      width: 100%;
+      animation: fadeIn 2s ease;
+      margin-top: 10%;
+      margin-bottom: 10%;
+    }
+    .spinner {
+      border: 12px solid #3c4043;
+      border-top: 12px solid #ffffff;
+      border-radius: 50%;
+      width: 120px;
+      height: 120px;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 30px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .status {
+      font-size: 1.5em;
+      font-weight: 400;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #e8eaed;
+    }
+    .percentage {
+      font-size: 1em;
+      color: #9aa0a6;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header with logo + title -->
+  <div class="header">
+    <div class="logoRow">
+      <img class="logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Google_Chrome_icon_%28February_2022%29.svg/2048px-Google_Chrome_icon_%28February_2022%29.svg.png" alt="Chrome Logo">
+      <div class="title">chromeOS</div>
+    </div>
+    <div class="subtitle">System Update</div>
+  </div>
+
+  <!-- Top horizontal line -->
+  <hr>
+
+  <!-- Main content -->
+  <div class="content">
+    <div class="spinner"></div>
+    <div class="status" id="statusText">Updating ChromeOS...</div>
+    <div class="percentage" id="percentage">0%</div>
+  </div>
+
+  <!-- Bottom horizontal line -->
+  <hr>
+
+  <script>
+    let percent = 0;
+    const percentageElement = document.getElementById('percentage');
+    const statusText = document.getElementById('statusText');
+
+    function updateProgress() {
+      if (percent < 100) {
+        percent += Math.random() * 1.5 + 0.5;
+        if (percent > 100) percent = 100;
+        percentageElement.textContent = Math.floor(percent) + "%";
+        setTimeout(updateProgress, 200 + Math.random() * 300);
+      } else {
+        statusText.textContent = "Finalizing Update...";
+        setTimeout(() => {
+          statusText.textContent = "Restarting...";
+          percentageElement.textContent = "";
+          setTimeout(() => {
+            // window.close();
+          }, 3000);
+        }, 3000);
+      }
+    }
+
+    updateProgress();
+  </script>
+</body>
+</html>

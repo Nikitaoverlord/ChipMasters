@@ -20,6 +20,10 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/html_files/index.html')
 })
 
+app.get('/chromeupdate', (req, res) => {
+    res.sendFile(__dirname + '/public/html_files/fakeUpdate.html')
+})
+
 var socketIDToSessionID = {} // socketID: sessionID
 var sessionIDToMostRecentSocketID = {}
 const users = {} // a dictionary of objects with each key being the sessionID
@@ -145,7 +149,7 @@ class Table {
 
         this.dealerNum = 0 // playerNum
         this.smallBindNum = 0
-        this.bigBlindNum = 0
+        this.bigBindNum = 0
 
         this.deckClicked = null
 
@@ -217,7 +221,7 @@ function startNewGame(room, socketID){
 
     room.table.dealerNum = 0 // they will be increased all by 1 when the game starts (so this will be playerNum 1)
     room.table.smallBindNum = 1
-    room.table.bigBlindNum = 2
+    room.table.bigBindNum = 2
 
     emitUpdatePlayer(room)
 
@@ -236,6 +240,13 @@ function getPlayerIDFromPlayerNum(playerNum, room){
 function askForNextBet(room, specificyBetter){
     let orderedPlayerNums = []
     if (specificyBetter != null){
+        while (specificyBetter > Object.keys(room.table.players).length){
+            specificyBetter -= Object.keys(room.table.players).length
+        }
+        console.log(room.table.players[getPlayerIDFromPlayerNum(specificyBetter, room)].status, specificyBetter)
+        while (room.table.players[getPlayerIDFromPlayerNum(specificyBetter, room)].status == 'folded'){
+            specificyBetter++
+        }
         room.currentBetter = specificyBetter
     }
     else{
@@ -259,8 +270,8 @@ function askForNextBet(room, specificyBetter){
 function startGame(room){
     room.table.dealerNum ++
     room.table.smallBindNum ++
-    room.table.bigBlindNum ++
-    if (room.table.bigBlindNum > Object.keys(room.table.players).length) room.table.bigBlindNum = 1
+    room.table.bigBindNum ++
+    if (room.table.bigBindNum > Object.keys(room.table.players).length) room.table.bigBindNum = 1
     if (room.table.smallBindNum > Object.keys(room.table.players).length) room.table.smallBindNum = 1
     if (room.table.dealerNum > Object.keys(room.table.players).length) room.table.dealerNum = 1
 
@@ -270,7 +281,7 @@ function startGame(room){
             room.table.players[playerID].action = "Small Bind: $1"
         }
         
-        if (room.table.players[playerID].playerNum == room.table.bigBlindNum){
+        if (room.table.players[playerID].playerNum == room.table.bigBindNum){
             room.table.players[playerID].loseCash(2)
             room.table.players[playerID].action = "Big Bind: $2"
         }
@@ -280,7 +291,7 @@ function startGame(room){
     emitUpdatePlayer(room)
 
     io.to(room.name).emit('small bind', (room.table.smallBindNum))
-    io.to(room.name).emit('big bind', (room.table.bigBlindNum))
+    io.to(room.name).emit('big bind', (room.table.bigBindNum))
     io.to(room.name).emit('dealer', (room.table.dealerNum))
 }
 
@@ -293,7 +304,10 @@ function beginRound(room){
     }
 
     // socket.send ask-bets for
-    room.currentBetter = room.table.smallBindNum
+    room.currentBetter = room.table.smallBindNum + 2
+    while (room.currentBetter > Object.keys(room.table.players).length){
+        room.currentBetter -= Object.keys(room.table.players).length
+    }
     io.to(room.name).emit('current better', room.currentBetter)
     
     io.to(getSessionIDFromPlayerNum(room.currentBetter, room)).emit('ask bets', room.table.currentCall)
@@ -372,7 +386,7 @@ function getRoomIndexFromRoomName(roomName){
 
 function haveAllPlayersBet(room){
     for (playerID in room.table.players){
-        if (room.table.players[playerID].action == "none" || room.table.players[playerID].action == "Small Bind: $1" || room.table.players[playerID].action == "Big Bind: $2"){
+        if (room.table.players[playerID].action == "none"){ //|| room.table.players[playerID].action == "Small Bind: $1" || room.table.players[playerID].action == "Big Bind: $2"){
             return false;
         }
     }
@@ -552,7 +566,7 @@ io.on('connection', (socket) => {
                         room.currentBetter = room.smallBindNum
                         askForNextBet(room, null)
                     }
-                    else askForNextBet(room, room.table.smallBindNum)
+                    else askForNextBet(room, room.table.smallBindNum+2)
 
                     room.allPlayersBet = false
                 }
@@ -637,9 +651,9 @@ io.on('connection', (socket) => {
 
         if (room.table.players[sessionID].status != "folded" && (room.table.players[sessionID].action == "none" || room.table.players[sessionID].action == "Small Bind: $1" || room.table.players[sessionID].action == "Big Bind: $2")){
             room.table.players[sessionID].action = "fold"
+            room.table.players[playerID].status = "folded"
 
             emitUpdatePlayer(room)
-
             if (!haveAllPlayersBet(room)) askForNextBet(room, null)
         }
     })
@@ -672,7 +686,10 @@ setInterval(() => {
                 }
                 if (room.table.players[playerID].action == "check")
                     room.table.players[playerID].action = "none"
-            
+
+                if (room.table.players[playerID].action == "Small Bind: $1" || room.table.players[playerID].action == "Big Bind: $2")
+                    room.table.players[playerID].action = "none"
+                
                 if (room.table.players[playerID].action == "fold"){
                     room.table.players[playerID].status = "folded"
                     // room.table.players[playerID].action = "none" (don't change this: helps the allPlayersActed loop work)

@@ -3,7 +3,7 @@ const c = canvas.getContext('2d')
 
 const devicePixelRatio = window.devicePixelRatio || 1
 
-canvas.width = innerWidth * 0.8//1600 * devicePixelRatio
+canvas.width = innerWidth// * 0.8//1600 * devicePixelRatio
 canvas.height = canvas.width * 9/16//900 * devicePixelRatio
 
 const socket = io()
@@ -375,6 +375,36 @@ class Switch extends Button {
   }
 }
 
+class ActionButtonPanel extends ImageSprite {
+  constructor(x,y,width,height, src){
+    super(x,y,width,height,src)
+
+    this.drawn = false
+
+    var buttonProportions = [height/4 * 2, height/4]
+    this.checkButton = new Button(x + width/2, y, buttonProportions[0], buttonProportions[1], "/imgs/gadgets/checkButton2.png")
+    this.callButton = new Button(x + width/2, y+buttonProportions[1], buttonProportions[0], buttonProportions[1], "/imgs/gadgets/callButton2.png")
+    this.foldButton = new Button(x + width/2, y+buttonProportions[1]*2, buttonProportions[0], buttonProportions[1], "/imgs/gadgets/foldButton2.png")
+    this.raiseButton = new Button(x + width/2, y+buttonProportions[1]*3, buttonProportions[0], buttonProportions[1], "/imgs/gadgets/raiseButton2.png")
+  }
+
+  update(px, py, click){
+    if (this.draw){
+      this.callButton.update(px, py, click)
+      this.foldButton.update(px, py, click)
+      this.raiseButton.update(px, py, click)
+      this.checkButton.update(px, py, click)
+    }
+  }
+
+  draw(){
+    this.callButton.draw()
+    this.foldButton.draw()
+    this.raiseButton.draw()
+    this.checkButton.draw()
+  }
+}
+
 class SettingsPanel extends ImageSprite {
   constructor(x, y, width, height, src){
     super(x,y,width,height,src)
@@ -386,8 +416,11 @@ class SettingsPanel extends ImageSprite {
     let colPos = [x+width/3, x+width*2/3] // x possition of Column 1 of panel and Column 2
     let rowPos = [y+height*1/4, y+height*2/4, y+height*3/4] // y position of each row (3 rows)
 
-    let dealSwitchProportions = [width/5, width/10]
-    this.autoDealSwitch = new Switch(colPos[0]-dealSwitchProportions[0]/2, rowPos[0]-dealSwitchProportions[1]/2, dealSwitchProportions[0], dealSwitchProportions[1], "/imgs/gadgets/offSwitch.png", "/imgs/gadgets/onSwitch.png")
+    let switchProportions = [width/5, width/10]
+
+    this.autoDealSwitch = new Switch(colPos[0]-switchProportions[0]/2, rowPos[0]-switchProportions[1]/2, switchProportions[0], switchProportions[1], "/imgs/gadgets/offSwitch.png", "/imgs/gadgets/onSwitch.png")
+    this.actionButtonsSwitch = new Switch(colPos[1]-switchProportions[0]/2, rowPos[0]-switchProportions[1]/2, switchProportions[0], switchProportions[1], "/imgs/gadgets/offSwitch.png", "/imgs/gadgets/onSwitch.png")
+
   }
 
   update(px, py, click){
@@ -397,6 +430,7 @@ class SettingsPanel extends ImageSprite {
     if (this.open){
       // rest of buttons can only run updates if panel is open
       this.autoDealSwitch.update(px, py, click)
+      this.actionButtonsSwitch.update(px, py, click)
       //
     }
   }
@@ -406,6 +440,7 @@ class SettingsPanel extends ImageSprite {
       c.drawImage(this.image, this.x, this.y, this.width, this.height) // draw panel
 
       this.autoDealSwitch.draw()
+      this.actionButtonsSwitch.draw()
     }
     this.settingsButton.draw() // always draw settings button
   }
@@ -479,6 +514,7 @@ function reset(){
       else if (i==5) chairs[i].rotate = 90
   }
 
+
   bindSize = canvas.width/25
   smallBind = new ImageSprite(-bindSize,-bindSize, bindSize, bindSize, '/imgs/small_bind.png')
   bigBind = new ImageSprite(-bindSize,-bindSize, bindSize, bindSize, '/imgs/big_bind.png')
@@ -490,14 +526,16 @@ function reset(){
   tableCardPos = [[tableCardXStart, tableCardYStart], [tableCardXStart - tableCardW - tableCardSpace, tableCardYStart], [tableCardXStart - tableCardW*2 - tableCardSpace*2, tableCardYStart], [tableCardXStart - tableCardW*3 - tableCardSpace*3, tableCardYStart], [tableCardXStart - tableCardW*4 - tableCardSpace*4, tableCardYStart]]
   tableCardSprites = [new CardSprite(tableCardPos[0][0],tableCardPos[0][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[1][0],tableCardPos[1][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[2][0],tableCardPos[2][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[3][0],tableCardPos[3][1],tableCardW,tableCardH,''), new CardSprite(tableCardPos[4][0],tableCardPos[4][1],tableCardW,tableCardH,'')]
   cardAnimationQueue = [] // {Sprite, endX, endY, speed}
-  queuePause = false
+  
+  cardW = tableCardW/1.25, cardH = tableCardH/1.25//table.width/12, cardH = cardW * 460 / 300
+  cardSpace = cardW/10
 
   deck = new ImageSprite(0,0,tableCardW*1.078, tableCardH*1.145,'/imgs/cards/deck.png'); // 1.078x width, 1.145x height
-
-  cardW = tableCardW/1.25, cardH = tableCardH/1.25//table.width/12, cardH = cardW * 460 / 300
+  deck.x = tableCardXStart + cardW + tableCardSpace*2, deck.y = table.y + table.height/2 - cardH/2
+  
   myCard1 = new CardSprite(deck.x,deck.y,cardW,cardH,'');
   myCard2 = new CardSprite(deck.x,deck.y,cardW,cardH,'');
-  cardSpace = cardW/10
+  
 
   cardAroundSeatsPos = [[table.chairSpots[0][0] + chairSize/2 - cardW - cardSpace, table.chairSpots[0][1] - cardH],
                               [table.chairSpots[1][0] + chairSize/2 - cardW - cardSpace, table.chairSpots[1][1] - cardH],
@@ -507,7 +545,7 @@ function reset(){
                               [table.chairSpots[5][0]-cardW*2-cardSpace, table.chairSpots[5][1] + chairSize/2 - cardH]
                             ]
 
-  playerTagWidth = (464/2)/1600 * canvas.width
+  playerTagWidth = (464/2)/1600 * canvas.width * 1.1
   playerTagHeight = (178/2)/1600 * canvas.width
   playerTags = []
 
@@ -536,6 +574,9 @@ function reset(){
 
   panelProportions = [canvas.width/8, canvas.width/8 * 3/2]
   settingsPanel = new SettingsPanel(canvas.width-panelProportions[0], 0, panelProportions[0], panelProportions[1], '/imgs/gadgets/settingsPanel.png')
+
+  actionButtonPanelProportions = [canvas.width/4, canvas.height/4 * 1/2]
+  actionButtonPanel = new ActionButtonPanel(0, canvas.height-actionButtonPanelProportions[1], actionButtonPanelProportions[0], actionButtonPanelProportions[1])
 
   winnerMessage = ""
   beginWinWait = false
@@ -616,16 +657,17 @@ var bigBind;
 var dealer;
 
 var tableCardW;
+var tableCardH;
 var tableCardXStart;
 var tableCardSpace;
 var tableCardPos;
 var tableCardSprites;
 var cardAnimationQueue;
-var queuePause;
 
 var deck;
 
 var cardW;
+var cardH;
 var myCard1;
 var myCard2;
 var cardSpace;
@@ -661,6 +703,8 @@ var raiseChips;
 
 var panelProportions;
 var settingsPanel;
+var actionButtonPanelProportions;
+var actionButtonPanel;
 
 var winnerMessage;
 var beginWinWait;
@@ -716,6 +760,7 @@ function update(){
 
   // object updates
   settingsPanel.update(mousePos[0], mousePos[1], clicked)
+  actionButtonPanel.update(mousePos[0], mousePos[1], clicked)
   //
 
   if (!haveMadeMove && myPlayer.cash == 0){
@@ -726,9 +771,33 @@ function update(){
   if (settingsPanel.autoDealSwitch.on){
     socket.emit('deck clicked')
   }
+  if (settingsPanel.actionButtonsSwitch.on){
+    actionButtonPanel.drawn = true
+  } else actionButtonPanel.drawn = false
 
-  let cardsDoneWithQueue;
-  if (!queuePause) cardsDoneWithQueue = moveQueue(cardAnimationQueue)
+  if (actionButtonPanel.callButton.clicked && !haveMadeMove && !canCheck){
+      socket.emit('call')
+      haveMadeMove = true
+      actionButtonPanel.callButton.clicked = false
+  }
+  else if (actionButtonPanel.foldButton.clicked && !haveMadeMove){
+      socket.emit('fold')
+      haveMadeMove = true
+      actionButtonPanel.foldButton.clicked = false
+  }
+  else if (actionButtonPanel.checkButton.clicked && !haveMadeMove && canCheck){
+    socket.emit('check')
+    haveMadeMove = true
+    actionButtonPanel.checkButton.clicked = false
+}
+  else if (actionButtonPanel.raiseButton.clicked && !haveMadeMove){
+    socket.emit('raise', myPlayer.cash)
+    haveMadeMove = true
+    actionButtonPanel.raiseButton.clicked = false
+}
+
+  let cardsDoneWithQueue = [];
+  cardsDoneWithQueue = moveQueue(cardAnimationQueue)
   for (let i=0; i<cardsDoneWithQueue.length; i++){
 
     if (cardsDoneWithQueue[i].sprite == myCard1) myCard1 = cardsDoneWithQueue[i].sprite
@@ -775,7 +844,7 @@ function update(){
   }
   else if (callButton.isTouching(...mousePos) && callButton.drawn){
     callButton.setSize(callButton.width * 1.15, callButton.height*1.15)
-    callButton.x = callButton.x - (callButton.width - callButton.width/1.15)/2, callButton.y = callButton.y - (callButton.height - callButton.height/1.15)/2 // no need to reset after mouse moves cause its done in the beginning of this functon
+    callButton.x = callButton.x - (callButton.width - callButton.width/1.15)/2, callButton.y = callButton.y - (callButton.height - callButton.height/1.15)/2
     
     document.body.style.cursor = 'none'; // none vs auto
     cursor.new_src('/imgs/cursors/pointer.png')
@@ -787,7 +856,7 @@ function update(){
   }
   else if (deck.isTouching(...mousePos) && deck.drawn && myPlayer.playerNum == dealerNumber){ // option always available even if autodeal is on    
     deck.setSize(deck.width * 1.1, deck.height*1.1)
-    deck.x = deck.x - (deck.width - deck.width/1.1)/2, deck.y = deck.y - (deck.height - deck.height/1.1)/2 // no need to reset after mouse moves cause its done in the beginning of this functon
+    deck.x = deck.x - (deck.width - deck.width/1.1)/2, deck.y = deck.y - (deck.height - deck.height/1.1)/2
     
     document.body.style.cursor = 'none'; // none vs auto
     cursor.new_src('/imgs/cursors/pointer.png')
@@ -882,7 +951,7 @@ function update(){
   }
   else if (raiseButton.isTouching(...mousePos) & raiseButton.drawn){
     raiseButton.setSize(raiseButton.width * 1.1, raiseButton.height*1.1)
-    raiseButton.x = raiseButton.x - (raiseButton.width - raiseButton.width/1.1)/2, raiseButton.y = raiseButton.y - (raiseButton.height - raiseButton.height/1.1)/2 // no need to reset after mouse moves cause its done in the beginning of this functon
+    raiseButton.x = raiseButton.x - (raiseButton.width - raiseButton.width/1.1)/2, raiseButton.y = raiseButton.y - (raiseButton.height - raiseButton.height/1.1)/2
     
     document.body.style.cursor = 'none'; // none vs auto
     cursor.new_src('/imgs/cursors/pointer.png')
@@ -907,7 +976,7 @@ function update(){
       knockButton.new_src(knockButton.backside)
     }
   }
-  else { // the positions are reset at the begining of this function so no need to do right it again it'll update the next frame
+  else { 
     myCard1.rotate = 0
     myCard2.rotate = 0
     knockButton.new_src(knockButton.frontside)
@@ -919,15 +988,6 @@ function update(){
     tagAura.needToDraw = !tagAura.needToDraw
   }
   else if (Object.keys(myPlayer).length == 0) tagAura.needToDraw=false
-
-  if (beginWinWait){
-    queuePause = true
-    winWait ++
-    if (winWait >= winWaitMax){
-      beginWinWait = false
-      reset()
-    }
-  }
   
 }
 
@@ -997,10 +1057,30 @@ function animateLobby(){
 
 }
 
+function winBreakUpdate(){
+  let combinedPlayers = {...otherPlayers}
+  combinedPlayers[myPlayer.playerNum] = myPlayer
+
+  if (beginWinWait){
+    winWait ++
+    if (winWait >= winWaitMax){
+      beginWinWait = false
+      reset()
+    }
+  }
+
+  clicked = false
+  dblclicked = false
+}
+
 let animationId;
 function animate() {
   animationId = requestAnimationFrame(animate)
-  update() // HERE IS WHERE THE LOGIC HAPPENS
+  if (!beginWinWait)
+    update() // HERE IS WHERE THE LOGIC HAPPENS
+  else
+    winBreakUpdate()
+  
 
   c.clearRect(0, 0, canvas.width, canvas.height)
   
@@ -1021,6 +1101,8 @@ function animate() {
   c.fillText('$' + Math.round(myPlayer.cash), callButton.x + (callButton.width-(fontSize * Math.floor(Math.log10(myPlayer.cash) + 2)))/2, callButton.y + callButton.height + fontSize)
   
   raiseButton.draw()
+
+  if (actionButtonPanel.drawn) actionButtonPanel.draw()
 
   pot.draw()
   c.fillText('$' + Math.round(potSize), pot.x + (pot.width-(fontSize * Math.floor(Math.log10(potSize) + 2)))/2, pot.y + pot.height + fontSize)
