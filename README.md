@@ -1,4 +1,4 @@
-# Multiplayer Poker
+# ChipMasters Poker
 
 A real-time multiplayer poker game built with JavaScript,
 Express, and Socket.IO.
