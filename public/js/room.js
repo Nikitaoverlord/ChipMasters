@@ -373,7 +373,7 @@ class Switch extends Button {
     if (this.on) this.new_src(this.on_src)
     else this.new_src(this.off_src)
   }
-}
+} 
 
 class ActionButtonPanel extends ImageSprite {
   constructor(x,y,width,height, src){
