@@ -1,4 +1,4 @@
-## ChipMasters Poker Game
+## ChipMasters Poker Game (2024-25)
 
 A real-time multiplayer poker game built with JavaScript,
 Express, and Socket.IO.
