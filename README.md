@@ -5,7 +5,7 @@ Express, and Socket.IO.
 
 ## Demo
 
-![Gameplay Demo](demo.gif)
+![Gameplay Demo](demo/poker video.mp4)
 
 ## Features
 
