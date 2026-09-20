@@ -5,7 +5,9 @@ Express, and Socket.IO.
 
 ## Demo
 
-![Gameplay Demo](demo/poker video.mp4)
+<video src="[YOUR_VIDEO_URL](https://github.com/Nikitaoverlord/ChipMasters/blob/master/demo/poker%20video.mp4)" width="100%" controls>
+  Your browser does not support the video tag.
+</video>
 
 ## Features
 
