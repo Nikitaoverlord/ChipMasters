@@ -1,4 +1,4 @@
-<img width="3807" height="1869" alt="Home Page sc" src="https://github.com/user-attachments/assets/df4b69e3-725e-490e-a777-6a6f94946ebb" /># ChipMasters Poker
+## ChipMasters Poker Game
 
 A real-time multiplayer poker game built with JavaScript,
 Express, and Socket.IO.
