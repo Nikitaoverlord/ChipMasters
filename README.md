@@ -1,3 +1,4 @@
+
 ## ChipMasters Poker Game (2024-25)
 
 A real-time multiplayer poker game built with JavaScript, Express, and Socket.IO.
@@ -8,8 +9,8 @@ Originally hosted on chipmasters.sneakyzone.com with Akamai until stopped paying
 <img width="3807" height="1869" alt="Home Page sc" src="https://github.com/user-attachments/assets/5d7c0d46-229c-4c0a-9118-c2ffd557f979" />
 
 ## Demo
-
-<video src="https://github.com/user-attachments/assets/2a0919dc-99c7-413d-ae14-83f25b4de255" width="100%"></video>
+Short Overview Video
+https://github.com/user-attachments/assets/e6d20879-00e2-48b5-b9e5-47c24722e1fc
 
 ## Features
 
